@@ -1,25 +1,39 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
-import os
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import PathJoinSubstitution
+
 
 def generate_launch_description():
-    config_file = os.path.join(
-        get_package_share_directory('vins_fusion_ros2'),
+    default_config = PathJoinSubstitution([
+        FindPackageShare('vins_fusion_ros2'),
         'config',
-        'euroc',
-        'euroc_mono_imu_config.yaml'
-    )
+        'gazebo',
+        'gazebo_stereo_config.yaml',
+    ])
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'config_file',
+            default_value=default_config,
+            description='Path to VINS YAML config',
+        ),
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use /clock (true for Gazebo sim or rosbag --clock)',
+        ),
         Node(
             package='vins_fusion_ros2',
             executable='vins_fusion_ros2_node',
             name='vins_fusion_ros2_node',
             output='screen',
             emulate_tty=True,
-            parameters=[{'use_sim_time': True},
-                        {'config_file': config_file}],
-        )
+            parameters=[{
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'config_file': LaunchConfiguration('config_file'),
+            }],
+        ),
     ])
-

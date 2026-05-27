@@ -40,9 +40,11 @@ void VinsEstimator::initializeSubscribers() {
   rclcpp::SubscriptionOptions sub_opt_feature;
   sub_opt_feature.callback_group = feature_callback_group_;
 
+  const auto sensor_qos = rclcpp::SensorDataQoS().keep_last(100);
+
   if (options->hasImu()) {
     auto imu = this->create_subscription<sensor_msgs::msg::Imu>(
-        options->imuTopic(), rclcpp::QoS(rclcpp::KeepLast(100)),
+        options->imuTopic(), sensor_qos,
         [this](const sensor_msgs::msg::Imu::SharedPtr msg) {
           auto imu_msg = fromMsg(*msg);
           estimator_->inputIMU(imu_msg);
@@ -68,7 +70,7 @@ void VinsEstimator::initializeSubscribers() {
                                           std::placeholders::_2));
   } else {
     auto sub_img0 = this->create_subscription<sensor_msgs::msg::Image>(
-        options->imageTopic(), rclcpp::QoS(rclcpp::KeepLast(100)),
+        options->imageTopic(), sensor_qos,
         [this](const sensor_msgs::msg::Image::SharedPtr msg) {
           ImageData image;
           image.image0 = fromMsg(*msg);
@@ -96,6 +98,8 @@ void VinsEstimator::initializerPublishers() {
       this->create_publisher<nav_msgs::msg::Odometry>("imu_propagate", 1);
   pub_path = this->create_publisher<nav_msgs::msg::Path>("path", 1);
   pub_odometry = this->create_publisher<nav_msgs::msg::Odometry>("odometry", 1);
+  pub_odometry_enu =
+      this->create_publisher<nav_msgs::msg::Odometry>("odometry_enu", 1);
   pub_image_track =
       this->create_publisher<sensor_msgs::msg::Image>("image_track", 1);
   pub_point_cloud =
@@ -173,6 +177,12 @@ void VinsEstimator::publishOdometry() {
     odometry.child_frame_id = body_frame_id;
 
     pub_odometry->publish(odometry);
+
+    nav_msgs::msg::Odometry odometry_enu = odometry;
+    odometry_enu.pose.pose.position.z = -odometry_enu.pose.pose.position.z;
+    odometry_enu.twist.twist.linear.z = -odometry_enu.twist.twist.linear.z;
+    pub_odometry_enu->publish(odometry_enu);
+
     geometry_msgs::msg::PoseStamped pose_stamped;
     pose_stamped.header = odometry.header;
     pose_stamped.header.frame_id = world_frame_id;
