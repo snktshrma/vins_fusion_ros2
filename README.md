@@ -28,16 +28,47 @@ sudo apt-get install libgoogle-glog-dev libeigen3-dev libceres-dev libopencv-dev
 
 ```bash
 cd $(PATH_TO_YOUR_ROS2_WS)/src
-git clone git@github.com:yangfuyuan/vins_fusion_ros2.git
+git clone git@github.com:snktshrma/vins_fusion_ros2.git
 cd ..
 colcon build --symlink-install && source ./install/setup.bash && source ./install/local_setup.bash
 ```
 
-## run
+## Run with Ardupilot ROS2-Gazebo
+
 ```bash
-# vins
-ros2 launch vins_fusion_ros2 vins_fusion_ros2.launch.py
+ros2 launch vins_fusion_ros2 vins_fusion_ros2.launch.py use_sim_time:=true
 ```
+
+## Gazebo (ArduPilot + ROS 2)
+
+For the Gazebo + ArduPilot SITL workspace (`ardupilot_gz`, iris stereo cameras), follow the official setup guide:
+
+**[ROS 2 with Gazebo (ArduPilot dev docs)](https://ardupilot.org/dev/docs/ros2-gazebo.html)**
+
+> After setting up all packages, switch **ardupilot_gz** to `dev/vins` branch: [https://github.com/snktshrma/ardupilot_gz/tree/dev/vins](https://github.com/snktshrma/ardupilot_gz/tree/dev/vins)
+
+Typical flow:
+
+1. Build `ardupilot_gz_bringup` per that guide (`colcon build --packages-up-to ardupilot_gz_bringup`).
+2. Start sim (warehouse uses stereo iris):
+   ```bash
+   ros2 launch ardupilot_gz_bringup iris_warehouse.launch.py # launcnes stereo cams and TFs
+   ```
+3. Run VINS with the Gazebo stereo config:
+   ```bash
+   ros2 launch vins_fusion_ros2 vins_fusion_ros2.launch.py use_sim_time:=true \
+     config_file:=$(ros2 pkg prefix vins_fusion_ros2)/share/vins_fusion_ros2/config/gazebo/gazebo_stereo_config.yaml
+   ```
+
+**Topics:**
+
+Topics published:
+
+- `/camera/image`, `/camera1/image`: Left and right camera images
+- `/odometry`: Raw VINS world frame odometry
+- `/odometry_enu`: Same pose as above, but with `z` and `vz` negated for ENU-style Z-up
+- `/ap/v1/imu/experimental/data`: ArduPilot IMU data over DDS ROS2
+
 ## Converting ROS 1 Bag Files to ROS 2 Format
 
 ### ROS 2 cannot play ROS 1 `.bag` files directly
