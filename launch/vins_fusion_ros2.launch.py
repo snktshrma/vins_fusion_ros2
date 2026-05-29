@@ -28,7 +28,8 @@ def generate_launch_description():
         Node(
             package='vins_fusion_ros2',
             executable='vins_fusion_ros2_node',
-            name='vins_fusion_ros2_node',
+            name='vins_estimator',
+            namespace='vins_estimator',
             output='screen',
             emulate_tty=True,
             parameters=[{

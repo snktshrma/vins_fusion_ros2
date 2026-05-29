@@ -2,7 +2,8 @@
 
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<VinsEstimator>();
+  rclcpp::NodeOptions options;
+  auto node = std::make_shared<VinsEstimator>(options);
   // 创建多线程执行器
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);

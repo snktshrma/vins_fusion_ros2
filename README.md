@@ -8,7 +8,8 @@ This repository is a ROS 2 adaptation of the original [VINS-Fusion](https://gith
 - Compatible with stereo or monocular cameras
 - Integration with IMU
 - Supports tightly coupled sensor fusion
-- Output of odometry and pose 
+- Output of odometry and pose
+- Loop fusion(pose graph / DBoW) and Global Fusion ported for ROS 2
 
 ## Prerequisites
 - **System**
@@ -33,11 +34,23 @@ cd ..
 colcon build --symlink-install && source ./install/setup.bash && source ./install/local_setup.bash
 ```
 
+**CMake / ROS 2 build guide:** see [docs/CMAKE_ROS2_GUIDE.md](docs/CMAKE_ROS2_GUIDE.md) for a full walkthrough of `CMakeLists.txt`, ament, targets, and debugging.
+
 ## Run with Ardupilot ROS2-Gazebo
+
+Local VIO/VO only:
 
 ```bash
 ros2 launch vins_fusion_ros2 vins_fusion_ros2.launch.py use_sim_time:=true
 ```
+
+VIO + loop closure:
+
+```bash
+ros2 launch vins_fusion_ros2 vins_fusion_full.launch.py use_sim_time:=true # publishes /loop_fusion/odometry_rect
+```
+
+![VINS loop fusion in RViz](assets/vins_loop.png)
 
 ## Gazebo (ArduPilot + ROS 2)
 
@@ -65,8 +78,7 @@ Typical flow:
 Topics published:
 
 - `/camera/image`, `/camera1/image`: Left and right camera images
-- `/odometry`: Raw VINS world frame odometry
-- `/odometry_enu`: Same pose as above, but with `z` and `vz` negated for ENU-style Z-up
+- `/vins_estimator/odometry`: VIO odometry (with launch namespace)
 - `/ap/v1/imu/experimental/data`: ArduPilot IMU data over DDS ROS2
 
 ## Converting ROS 1 Bag Files to ROS 2 Format

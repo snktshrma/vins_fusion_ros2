@@ -20,7 +20,7 @@ class VinsEstimator : public rclcpp::Node {
   using SyncPolicy =
       message_filters::sync_policies::ApproximateTime<Image, Image>;
 
-  VinsEstimator();
+  VinsEstimator(const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions());
   ~VinsEstimator();
 
   void initialize();
@@ -53,7 +53,7 @@ class VinsEstimator : public rclcpp::Node {
   //
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_track;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odometry,
-      pub_odometry_enu, pub_latest_odometry, pub_keyframe_pose;
+      pub_latest_odometry, pub_keyframe_pose, pub_extrinsic;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr pub_point_cloud,
       pub_margin_cloud, pub_keyframe_point;

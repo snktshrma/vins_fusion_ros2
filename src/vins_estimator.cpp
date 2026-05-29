@@ -1,7 +1,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <vins_fusion_ros2/vins_estimator.h>
 
-VinsEstimator::VinsEstimator() : rclcpp::Node("vins_estimator") {
+VinsEstimator::VinsEstimator(const rclcpp::NodeOptions& node_options)
+    : rclcpp::Node("vins_estimator", node_options) {
   options = std::make_shared<VINSOptions>();
   estimator_ = std::make_shared<Estimator>();
   tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
@@ -98,8 +99,6 @@ void VinsEstimator::initializerPublishers() {
       this->create_publisher<nav_msgs::msg::Odometry>("imu_propagate", 1);
   pub_path = this->create_publisher<nav_msgs::msg::Path>("path", 1);
   pub_odometry = this->create_publisher<nav_msgs::msg::Odometry>("odometry", 1);
-  pub_odometry_enu =
-      this->create_publisher<nav_msgs::msg::Odometry>("odometry_enu", 1);
   pub_image_track =
       this->create_publisher<sensor_msgs::msg::Image>("image_track", 1);
   pub_point_cloud =
@@ -110,6 +109,8 @@ void VinsEstimator::initializerPublishers() {
       this->create_publisher<sensor_msgs::msg::PointCloud>("keyframe_point", 1);
   pub_keyframe_pose =
       this->create_publisher<nav_msgs::msg::Odometry>("keyframe_pose", 1);
+  pub_extrinsic =
+      this->create_publisher<nav_msgs::msg::Odometry>("extrinsic", 1);
 }
 
 void VinsEstimator::stereoCallback(
@@ -178,11 +179,6 @@ void VinsEstimator::publishOdometry() {
 
     pub_odometry->publish(odometry);
 
-    nav_msgs::msg::Odometry odometry_enu = odometry;
-    odometry_enu.pose.pose.position.z = -odometry_enu.pose.pose.position.z;
-    odometry_enu.twist.twist.linear.z = -odometry_enu.twist.twist.linear.z;
-    pub_odometry_enu->publish(odometry_enu);
-
     geometry_msgs::msg::PoseStamped pose_stamped;
     pose_stamped.header = odometry.header;
     pose_stamped.header.frame_id = world_frame_id;
@@ -216,6 +212,19 @@ void VinsEstimator::publishOdometry() {
     tf_msg.transform.rotation.z = camera_pose.orientation.z();
     tf_msg.transform.rotation.w = camera_pose.orientation.w();
     tf_broadcaster_->sendTransform(tf_msg);
+
+    nav_msgs::msg::Odometry extrinsic_odom;
+    extrinsic_odom.header = odometry.header;
+    extrinsic_odom.header.frame_id = body_frame_id;
+    extrinsic_odom.child_frame_id = camera_frame_id;
+    extrinsic_odom.pose.pose.position.x = camera_pose.position.x();
+    extrinsic_odom.pose.pose.position.y = camera_pose.position.y();
+    extrinsic_odom.pose.pose.position.z = camera_pose.position.z();
+    extrinsic_odom.pose.pose.orientation.x = camera_pose.orientation.x();
+    extrinsic_odom.pose.pose.orientation.y = camera_pose.orientation.y();
+    extrinsic_odom.pose.pose.orientation.z = camera_pose.orientation.z();
+    extrinsic_odom.pose.pose.orientation.w = camera_pose.orientation.w();
+    pub_extrinsic->publish(extrinsic_odom);
   }
 }
 
