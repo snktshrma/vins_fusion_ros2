@@ -52,6 +52,17 @@ ros2 launch vins_fusion_ros2 vins_fusion_full.launch.py use_sim_time:=true # pub
 
 ![VINS loop fusion in RViz](assets/vins_loop.png)
 
+Rolling voxel map:
+(Base for geometric understanding, memory and trajectory planning, will add modern representations as requirement pops up)
+
+```bash
+ros2 launch vins_fusion_ros2 voxel_map.launch.py use_sim_time:=true
+```
+
+Uses `/loop_fusion/odometry_rect` pose + `/camera/depth/points`. Publishes `/voxel_map/occupancy`. (Currently using hardcoded TFs in script)
+
+![rolling voxel map in RViz](assets/3dmap.png)
+
 ## Gazebo (ArduPilot + ROS 2)
 
 For the Gazebo + ArduPilot SITL workspace (`ardupilot_gz`, iris stereo cameras), follow the official setup guide:
