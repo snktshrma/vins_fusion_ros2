@@ -25,6 +25,9 @@ find_package(ament_index_cpp REQUIRED)
 
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common filters)
+find_package(Eigen3 REQUIRED)
+find_package(pcl_conversions REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -45,13 +48,19 @@ ament_target_dependencies(vins_fusion_ros2_node
 
 target_link_libraries(vins_fusion_ros2_node vins_lib)
 
+add_executable(voxel_map_node src/voxel_map_node.cpp)
+ament_target_dependencies(voxel_map_node rclcpp nav_msgs sensor_msgs pcl_conversions)
+target_include_directories(voxel_map_node PRIVATE ${PCL_INCLUDE_DIRS})
+target_link_libraries(voxel_map_node ${PCL_LIBRARIES})
+target_compile_definitions(voxel_map_node PRIVATE ${PCL_DEFINITIONS})
+
 install(
   DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(
-  TARGETS vins_fusion_ros2_node
+  TARGETS vins_fusion_ros2_node voxel_map_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
